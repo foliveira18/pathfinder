@@ -98,150 +98,161 @@
       <div id="modalBody" class="body"></div>
     </div>
   </div>
+<script>
+  // 1) SET THIS to your Vercel URL (must be the one that works in your browser)
+  const DEMO_URL = "https://pathfinder-demo-eight.vercel.app";
 
-  <script>
-    // 1) SET THIS to your Vercel URL
-    const DEMO_URL = "https://pathfinder-demo-eight.vercel.app";
+  // Wire demo links
+  const tryDemoTop = document.getElementById("tryDemoTop");
+  const tryDemoModal = document.getElementById("tryDemoModal");
+  if (tryDemoTop) tryDemoTop.href = DEMO_URL;
+  if (tryDemoModal) tryDemoModal.href = DEMO_URL;
 
-    // Wire demo links
-    const tryDemoTop = document.getElementById("tryDemoTop");
-    const tryDemoModal = document.getElementById("tryDemoModal");
-    if (tryDemoTop) tryDemoTop.href = DEMO_URL;
-    if (tryDemoModal) tryDemoModal.href = DEMO_URL;
-
-    // Modal demo content (static previews)
-    const demos = {
-      pulse: {
-        title: "Daily Pulse (preview)",
-        body: `
-          <p><b>Capture:</b> energy, stress, focus, sleep, and “one thing that matters today”.</p>
-          <p><b>Output:</b> a single best move + micro-step to reduce friction.</p>
-          <p class="muted small">Tip: click “Open live demo” to see the real Next.js flow.</p>
-        `
-      },
-      journal: {
-        title: "Decision Journal (preview)",
-        body: `
-          <p><b>Log:</b> the decision, options, assumptions, and what would change your mind.</p>
-          <p><b>Output:</b> a tight checklist: reversibility, opportunity cost, pre-mortem, and next action.</p>
-          <p class="muted small">Tip: open the live demo to see the journaling loop.</p>
-        `
-      },
-      plan: {
-        title: "Weekly Plan (preview)",
-        body: `
-          <p><b>Choose:</b> one weekly “best move” aligned with your goals.</p>
-          <p><b>Output:</b> micro-habits + deadline + Friday review prompt.</p>
-          <p class="muted small">Tip: open the live demo to see the planning view.</p>
-        `
-      }
-    };
-
-    // Modal behaviour
-    const modal = document.getElementById("modal");
-    const modalTitle = document.getElementById("modalTitle");
-    const modalBody = document.getElementById("modalBody");
-    const closeModal = document.getElementById("closeModal");
-
-    function openModal(key) {
-      const d = demos[key];
-      modalTitle.textContent = d ? d.title : "Preview";
-      modalBody.innerHTML = d ? d.body : "<p>Preview unavailable.</p>";
-      modal.style.display = "block";
-      modal.setAttribute("aria-hidden", "false");
+  // Modal demo content (static previews)
+  const demos = {
+    pulse: {
+      title: "Daily Pulse (preview)",
+      body: `
+        <p><b>Capture:</b> energy, stress, focus, sleep, and “one thing that matters today”.</p>
+        <p><b>Output:</b> a single best move + micro-step to reduce friction.</p>
+        <p class="muted small">Tip: click “Open live demo” to see the real Next.js flow.</p>
+      `
+    },
+    journal: {
+      title: "Decision Journal (preview)",
+      body: `
+        <p><b>Log:</b> the decision, options, assumptions, and what would change your mind.</p>
+        <p><b>Output:</b> a tight checklist: reversibility, opportunity cost, pre-mortem, and next action.</p>
+        <p class="muted small">Tip: open the live demo to see the journaling loop.</p>
+      `
+    },
+    plan: {
+      title: "Weekly Plan (preview)",
+      body: `
+        <p><b>Choose:</b> one weekly “best move” aligned with your goals.</p>
+        <p><b>Output:</b> micro-habits + deadline + Friday review prompt.</p>
+        <p class="muted small">Tip: open the live demo to see the planning view.</p>
+      `
     }
-    function shutModal() {
-      modal.style.display = "none";
-      modal.setAttribute("aria-hidden", "true");
+  };
+
+  // Modal behaviour
+  const modal = document.getElementById("modal");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalBody = document.getElementById("modalBody");
+  const closeModal = document.getElementById("closeModal");
+
+  function openModal(key) {
+    const d = demos[key];
+    if (!modal || !modalTitle || !modalBody) return;
+    modalTitle.textContent = d ? d.title : "Preview";
+    modalBody.innerHTML = d ? d.body : "<p>Preview unavailable.</p>";
+    modal.style.display = "block";
+    modal.setAttribute("aria-hidden", "false");
+  }
+  function shutModal() {
+    if (!modal) return;
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  document.querySelectorAll(".tile").forEach(btn => {
+    btn.addEventListener("click", () => openModal(btn.getAttribute("data-key")));
+  });
+  closeModal && closeModal.addEventListener("click", shutModal);
+  modal && modal.addEventListener("click", (e) => { if (e.target === modal) shutModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal && modal.style.display === "block") shutModal(); });
+
+  // Waitlist form: robust submit with fallback
+  (function () {
+    const form = document.getElementById("waitlist");
+    const status = document.getElementById("status");
+    const btn = document.getElementById("submitBtn");
+    const emailInput = document.getElementById("email");
+
+    if (!form || !btn || !emailInput || !status) return;
+
+    // IMPORTANT: start enabled so the form still works even if JS later errors
+    btn.disabled = false;
+
+    function setStatus(message, kind) {
+      status.className = "status small" + (kind ? (" " + kind) : "");
+      status.textContent = message || "";
     }
 
-    document.querySelectorAll(".tile").forEach(btn => {
-      btn.addEventListener("click", () => openModal(btn.getAttribute("data-key")));
-    });
-    closeModal?.addEventListener("click", shutModal);
-    modal?.addEventListener("click", (e) => { if (e.target === modal) shutModal(); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.style.display === "block") shutModal(); });
+    function emailLooksValid() {
+      const v = (emailInput.value || "").trim();
+      return v && emailInput.checkValidity();
+    }
 
-    // Waitlist form: enable submit only when email looks valid + submit via fetch
-    (function () {
-      const form = document.getElementById("waitlist");
-      const status = document.getElementById("status");
-      const btn = document.getElementById("submitBtn");
-      const emailInput = document.getElementById("email");
-
-      function setStatus(message, kind) {
-        status.className = "status small" + (kind ? (" " + kind) : "");
-        status.textContent = message || "";
-      }
-
-      function updateButtonState() {
-        const ok = emailInput.value.trim() && emailInput.checkValidity();
-        btn.disabled = !ok;
-      }
-
-      emailInput.addEventListener("input", () => {
-        setStatus("");
-        updateButtonState();
-      });
-
+    // Enable/disable button live (nice UX, but not required)
+    function updateButtonState() {
+      btn.disabled = !emailLooksValid();
+    }
+    emailInput.addEventListener("input", () => {
+      setStatus("");
       updateButtonState();
+    });
+    updateButtonState();
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+    form.addEventListener("submit", async (e) => {
+      // If invalid, let browser show native validation messages
+      if (!emailLooksValid()) {
+        // allow native UI
+        return;
+      }
 
-        const email = (emailInput.value || "").trim();
-        if (!email) {
-          setStatus("Please enter your email.", "err");
-          emailInput.focus();
-          return;
-        }
-        if (!emailInput.checkValidity()) {
-          setStatus("That email address doesn’t look valid.", "err");
-          emailInput.focus();
-          return;
-        }
+      // We try fetch first; if it fails, we fall back to normal POST
+      e.preventDefault();
 
-        const hp = form.querySelector('input[name="website"]');
-        if (hp && hp.value) {
-          setStatus("Thanks!", "ok");
+      // Honeypot (bots)
+      const hp = form.querySelector('input[name="website"]');
+      if (hp && hp.value) {
+        setStatus("Thanks — you’re on the list.", "ok");
+        form.reset();
+        updateButtonState();
+        return;
+      }
+
+      const old = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      setStatus("");
+
+      try {
+        const res = await fetch(form.action, {
+          method: "POST",
+          body: new FormData(form),
+          headers: { "Accept": "application/json" },
+          mode: "cors",
+          cache: "no-store",
+        });
+
+        if (res.ok) {
+          setStatus("Thanks — you’re on the list.", "ok");
           form.reset();
-          btn.disabled = true;
-          return;
+        } else {
+          // Try to read Formspree error details
+          let msg = `Submit failed (HTTP ${res.status}). Please try again.`;
+          try {
+            const data = await res.json();
+            if (data?.errors?.length) {
+              msg = data.errors.map(e => e.message).join(" ");
+            }
+          } catch (_) {}
+          setStatus(msg, "err");
         }
-
-        btn.disabled = true;
-        const old = btn.textContent;
-        btn.textContent = "Sending…";
-        setStatus("");
-
-        try {
-          const res = await fetch(form.action, {
-            method: "POST",
-            body: new FormData(form),
-            headers: { "Accept": "application/json" }
-          });
-
-          if (res.ok) {
-            setStatus("Thanks — you’re on the list.", "ok");
-            form.reset();
-          } else {
-            let msg = "Submit failed. Please try again.";
-            try {
-              const data = await res.json();
-              if (data && data.errors && data.errors.length) {
-                msg = data.errors.map(e => e.message).join(" ");
-              }
-            } catch (_) {}
-            setStatus(msg, "err");
-          }
-        } catch (err) {
-          setStatus("Network error. Please try again (or email me directly).", "err");
-        } finally {
-          btn.textContent = old;
-          updateButtonState();
-        }
-      });
-    })();
-  </script>
+      } catch (err) {
+        // Fallback: normal form submit (redirects to Formspree success page)
+        setStatus("Network issue — submitting via fallback…", "err");
+        try { form.submit(); } catch (_) {}
+        return;
+      } finally {
+        btn.textContent = old;
+        updateButtonState();
+      }
+    });
+  })();
+</script>
 </body>
 </html>
