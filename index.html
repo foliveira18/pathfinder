@@ -13,16 +13,26 @@
     .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
     input{padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.2);color:#e9eefc;min-width:260px}
     input:focus{outline:2px solid rgba(122,162,255,.55);outline-offset:2px}
-    button{padding:12px 14px;border-radius:12px;border:1px solid rgba(122,162,255,.35);background:rgba(122,162,255,.16);color:#e9eefc;cursor:pointer}
+    button,.btn{padding:12px 14px;border-radius:12px;border:1px solid rgba(122,162,255,.35);background:rgba(122,162,255,.16);color:#e9eefc;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
     button[disabled]{opacity:.6;cursor:not-allowed}
     .k{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}
-    .k > div{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px}
+    .tile{all:unset;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;display:block}
+    .tile:hover{border-color:rgba(122,162,255,.45)}
+    .tile:focus{outline:2px solid rgba(122,162,255,.55);outline-offset:2px}
     .small{font-size:12px;color:#93a4c7}
     a{color:#7aa2ff;text-decoration:none}
     .status{margin-top:10px;font-size:13px}
     .status.ok{color:#a7f3d0}
     .status.err{color:#fca5a5}
     .hp{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;}
+    .hr{height:1px;background:rgba(255,255,255,.08);margin:16px 0}
+    .muted{color:#93a4c7}
+    /* modal */
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);padding:18px}
+    .modal .box{max-width:760px;margin:8vh auto;background:#121a2b;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:18px}
+    .modal .top{display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .modal .body{margin-top:12px;color:#93a4c7;line-height:1.6}
+    .pill{font-size:12px;border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 10px;color:#93a4c7}
   </style>
 </head>
 <body>
@@ -32,12 +42,29 @@
       <h1>Pathfinder</h1>
       <p>An opportunity navigation app that turns your goals and decisions into small weekly actions — across health, money, relationships, and career.</p>
 
-      <div class="k">
-        <div><b>Daily pulse</b><p class="small">30 seconds to capture state</p></div>
-        <div><b>Decision journal</b><p class="small">2 minutes to force clarity</p></div>
-        <div><b>Weekly plan</b><p class="small">1 “best move” + micro-habits</p></div>
+      <div class="row" style="margin-top:10px">
+        <a id="tryDemoTop" class="btn" href="#" target="_blank" rel="noopener noreferrer">Try the demo</a>
+        <span class="pill">Static landing + live Next.js demo</span>
       </div>
 
+      <div class="k" aria-label="Key features">
+        <button class="tile" type="button" data-key="pulse">
+          <b>Daily pulse</b>
+          <p class="small">30 seconds to capture state</p>
+        </button>
+        <button class="tile" type="button" data-key="journal">
+          <b>Decision journal</b>
+          <p class="small">2 minutes to force clarity</p>
+        </button>
+        <button class="tile" type="button" data-key="plan">
+          <b>Weekly plan</b>
+          <p class="small">1 “best move” + micro-habits</p>
+        </button>
+      </div>
+
+      <div class="hr"></div>
+
+      <p class="small" style="margin:0 0 6px">Join the waitlist</p>
       <form id="waitlist" class="row" action="https://formspree.io/f/xkogorzw" method="POST" novalidate>
         <label class="hp" aria-hidden="true">
           Leave this field empty
@@ -46,7 +73,7 @@
 
         <input id="email" type="email" name="email" placeholder="Email for early access" required />
         <input type="hidden" name="_subject" value="Pathfinder — waitlist signup" />
-        <button id="submitBtn" type="submit">Join waitlist</button>
+        <button id="submitBtn" type="submit" disabled>Join waitlist</button>
       </form>
 
       <div id="status" class="status small" role="status" aria-live="polite"></div>
@@ -58,7 +85,84 @@
     </div>
   </div>
 
+  <!-- modal -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="top">
+        <b id="modalTitle">Demo</b>
+        <div class="row" style="margin-top:0">
+          <a id="tryDemoModal" class="btn" href="#" target="_blank" rel="noopener noreferrer">Open live demo</a>
+          <button id="closeModal" type="button">Close</button>
+        </div>
+      </div>
+      <div id="modalBody" class="body"></div>
+    </div>
+  </div>
+
   <script>
+    // 1) SET THIS to your Vercel URL
+    const DEMO_URL = "https://pathfinder-demo-eight.vercel.app";
+
+    // Wire demo links
+    const tryDemoTop = document.getElementById("tryDemoTop");
+    const tryDemoModal = document.getElementById("tryDemoModal");
+    if (tryDemoTop) tryDemoTop.href = DEMO_URL;
+    if (tryDemoModal) tryDemoModal.href = DEMO_URL;
+
+    // Modal demo content (static previews)
+    const demos = {
+      pulse: {
+        title: "Daily Pulse (preview)",
+        body: `
+          <p><b>Capture:</b> energy, stress, focus, sleep, and “one thing that matters today”.</p>
+          <p><b>Output:</b> a single best move + micro-step to reduce friction.</p>
+          <p class="muted small">Tip: click “Open live demo” to see the real Next.js flow.</p>
+        `
+      },
+      journal: {
+        title: "Decision Journal (preview)",
+        body: `
+          <p><b>Log:</b> the decision, options, assumptions, and what would change your mind.</p>
+          <p><b>Output:</b> a tight checklist: reversibility, opportunity cost, pre-mortem, and next action.</p>
+          <p class="muted small">Tip: open the live demo to see the journaling loop.</p>
+        `
+      },
+      plan: {
+        title: "Weekly Plan (preview)",
+        body: `
+          <p><b>Choose:</b> one weekly “best move” aligned with your goals.</p>
+          <p><b>Output:</b> micro-habits + deadline + Friday review prompt.</p>
+          <p class="muted small">Tip: open the live demo to see the planning view.</p>
+        `
+      }
+    };
+
+    // Modal behaviour
+    const modal = document.getElementById("modal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalBody = document.getElementById("modalBody");
+    const closeModal = document.getElementById("closeModal");
+
+    function openModal(key) {
+      const d = demos[key];
+      modalTitle.textContent = d ? d.title : "Preview";
+      modalBody.innerHTML = d ? d.body : "<p>Preview unavailable.</p>";
+      modal.style.display = "block";
+      modal.setAttribute("aria-hidden", "false");
+    }
+    function shutModal() {
+      modal.style.display = "none";
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    document.querySelectorAll(".tile").forEach(btn => {
+      btn.addEventListener("click", () => openModal(btn.getAttribute("data-key")));
+    });
+    closeModal?.addEventListener("click", shutModal);
+    modal?.addEventListener("click", (e) => { if (e.target === modal) shutModal(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.style.display === "block") shutModal(); });
+
+    // Waitlist form: enable submit only when email looks valid + submit via fetch
     (function () {
       const form = document.getElementById("waitlist");
       const status = document.getElementById("status");
@@ -70,10 +174,21 @@
         status.textContent = message || "";
       }
 
+      function updateButtonState() {
+        const ok = emailInput.value.trim() && emailInput.checkValidity();
+        btn.disabled = !ok;
+      }
+
+      emailInput.addEventListener("input", () => {
+        setStatus("");
+        updateButtonState();
+      });
+
+      updateButtonState();
+
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        // Basic validation
         const email = (emailInput.value || "").trim();
         if (!email) {
           setStatus("Please enter your email.", "err");
@@ -86,12 +201,11 @@
           return;
         }
 
-        // Honeypot check (bots)
         const hp = form.querySelector('input[name="website"]');
         if (hp && hp.value) {
-          // silently ignore spam
           setStatus("Thanks!", "ok");
           form.reset();
+          btn.disabled = true;
           return;
         }
 
@@ -123,8 +237,8 @@
         } catch (err) {
           setStatus("Network error. Please try again (or email me directly).", "err");
         } finally {
-          btn.disabled = false;
           btn.textContent = old;
+          updateButtonState();
         }
       });
     })();
