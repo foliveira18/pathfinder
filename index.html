@@ -45,12 +45,14 @@
         immediate <b>Best Move</b> + <b>1-minute plan</b>. Then you turn it into <b>habits with deadlines</b>.
       </p>
 
+      <!-- ✅ Hard-code the Vercel URL (no JS needed) -->
       <div class="row">
-        <!-- IMPORTANT: set this link below in the script -->
-        <a id="demoBtn" class="btn btnPrimary" href="#" target="_blank" rel="noopener noreferrer">
+        <a class="btn btnPrimary"
+           href="https://pathfinder-demo-eight.vercel.app/"
+           target="_blank"
+           rel="noopener noreferrer">
           Try live demo →
         </a>
-        <a class="btn" href="#waitlist">Join waitlist</a>
       </div>
 
       <div class="k" aria-label="Key features">
@@ -105,14 +107,7 @@
   </div>
 
   <script>
-    // ✅ 1) Set your Vercel demo URL here
-    const DEMO_URL = "https://pathfinder-demo-eight.vercel.app/";
-
-    // Wire demo button
-    const demoBtn = document.getElementById("demoBtn");
-    if (demoBtn) demoBtn.href = DEMO_URL;
-
-    // ✅ Formspree submit (keeps your current setup)
+    // ✅ Formspree submit only (no demo-link JS)
     (function () {
       const form = document.getElementById("waitlistForm");
       const status = document.getElementById("status");
@@ -128,23 +123,11 @@
         e.preventDefault();
 
         const email = (emailInput.value || "").trim();
-        if (!email) {
-          setStatus("Please enter your email.", "err");
-          emailInput.focus();
-          return;
-        }
-        if (!emailInput.checkValidity()) {
-          setStatus("That email address doesn’t look valid.", "err");
-          emailInput.focus();
-          return;
-        }
+        if (!email) { setStatus("Please enter your email.", "err"); emailInput.focus(); return; }
+        if (!emailInput.checkValidity()) { setStatus("That email address doesn’t look valid.", "err"); emailInput.focus(); return; }
 
         const hp = form.querySelector('input[name="website"]');
-        if (hp && hp.value) {
-          setStatus("Thanks!", "ok");
-          form.reset();
-          return;
-        }
+        if (hp && hp.value) { setStatus("Thanks!", "ok"); form.reset(); return; }
 
         btn.disabled = true;
         const old = btn.textContent;
@@ -165,9 +148,7 @@
             let msg = "Submit failed. Please try again.";
             try {
               const data = await res.json();
-              if (data && data.errors && data.errors.length) {
-                msg = data.errors.map(e => e.message).join(" ");
-              }
+              if (data && data.errors && data.errors.length) msg = data.errors.map(e => e.message).join(" ");
             } catch (_) {}
             setStatus(msg, "err");
           }
